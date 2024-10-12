@@ -1,5 +1,5 @@
 "use strict";
-let x=0.0, y=0.0, z=1.0, r=0.0, speed=0.01, key=1.0;
+let x=0.0, y=0.0, z=1.0, r=0.0, speed=0.01;
 let default_x=0.0, default_y=0.0, default_z=1.0, default_r=0.0, default_speed=0.01;
 
 
@@ -36,15 +36,33 @@ function createProgram(gl, vertexShader, fragmentShader) {
   return undefined;
 }
 
-function getKey(key){
-	if (pressedKeys[49])return 1.0;
-	if (pressedKeys[50])return 2.0;
-	// keycode from 1->9 are 49->57 and for 0 is 48
-	// I will add the other ifs only if i need to make more fractals
 
-	return key;
+function newProg(index)
+{
+	if (pressedKeys[49])return 1;
+	if (pressedKeys[50])return 2;
+
+	return index+1;
 }
 
+// Array to keep shader files
+let fragmentShaders = [
+	"./mandelbrot.glsl",
+	"./test1.glsl"
+];
+let currentProgram;
+let programs = [];
+let currentShaderIndex = 0;
+
+function switchShader(gl, index) {
+	if (index<fragmentShaders.length){
+		currentShaderIndex = index;
+		gl.useProgram(programs[currentShaderIndex]);
+	} else {
+		console.log("ERROR: incorect fractal");
+		return;
+	}
+}
 
 function main() {
 // Get A WebGL context
@@ -53,11 +71,10 @@ function main() {
 	if (!gl) {
 		console.log("WebGL2 not suported!");
 		return;
-	}
-	
-
+	}  
 // create GLSL shaders, upload the GLSL source, compile the shaders
-	Promise.all([fetch("./vertex.glsl"), fetch("./mandelbrot.glsl")])
+	Promise.all([fetch("./vertex.glsl"), fetch(fragmentShaders[0])]) // foreach does not work to do this automatic so fuck you,
+																	// you need to add them manually (i hate js)
 		.then((values) => {
 			let result = [];
 			for (const i in values){
@@ -67,13 +84,25 @@ function main() {
 		})
 		.then((values) => 
 		{
-		//	console.log(values);
+			//	console.log(values);
 			let program = createProgram(gl,
 				createShader(gl, gl.VERTEX_SHADER, values[0]),
 				createShader(gl, gl.FRAGMENT_SHADER, values[1])
 			);
-			//let keyUniformLocation = gl.getUniformLocation(program, "u_key");
 			
+			// Create and store all programs
+			const vertexShader = createShader(gl, gl.VERTEX_SHADER, values[0]);
+
+			for (let i = 1; i < values.length; i++) {
+				console.log(i);
+			  	const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, values[i]);
+			  	const program = createProgram(gl, vertexShader, fragmentShader);
+			  	programs.push(program);
+			  	//console.log(program);
+			}
+
+			currentProgram=programs[currentShaderIndex];
+			gl.useProgram(currentProgram);
 			let timeUniformLocation = gl.getUniformLocation(program, "u_time"); 
 			
 			let viewUniformLocation = gl.getUniformLocation(program, "u_view"); 
@@ -180,7 +209,8 @@ function main() {
 					r=default_r;
 					speed=default_speed;
 				}
-				key=getKey(key);
+				var tmp=newProg(currentShaderIndex)-1;
+				if (currentShaderIndex!=tmp)switchShader(gl, tmp);
 			}
 
 			// begin the render loop
