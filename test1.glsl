@@ -58,7 +58,8 @@ void main()
 		for( int i=0; i<maxiters; ++i)
 		{
 			aux = z;
-			z=cm(z, vec2(2, 0));
+            aux.x=-aux.x;
+			z=cm(z, aux);
 //			z.x = (z.x*z.x -z.y*z.y);
 //			z.y = (2.0*aux.x*aux.y);
 			z += c;
