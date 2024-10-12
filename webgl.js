@@ -51,12 +51,13 @@ function main() {
 	var canvas = document.getElementById("c");
 	var gl = canvas.getContext("webgl2");
 	if (!gl) {
+		console.log("WebGL2 not suported!");
 		return;
 	}
 	
 
 // create GLSL shaders, upload the GLSL source, compile the shaders
-	Promise.all([fetch("./vertex.glsl"), fetch("./frag.glsl")])
+	Promise.all([fetch("./vertex.glsl"), fetch("./mandelbrot.glsl")])
 		.then((values) => {
 			let result = [];
 			for (const i in values){
