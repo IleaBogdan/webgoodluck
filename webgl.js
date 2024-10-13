@@ -71,6 +71,19 @@ function switchShader(gl, index) {
 	}
 }
 
+function setValues(gl, timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation)
+{
+	timeUniformLocation = gl.getUniformLocation(currentProgram, "u_time"); 
+			
+	viewUniformLocation = gl.getUniformLocation(currentProgram, "u_view"); 
+
+	resolutionUniformLocation = gl.getUniformLocation(currentProgram, "u_resolution");
+
+	positionAttributeLocation = gl.getAttribLocation(currentProgram, "a_position");
+	
+	var ret;
+	return [timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation];//ret;
+}
 function main() {
 // Get A WebGL context
 	var canvas = document.getElementById("c");
@@ -104,7 +117,7 @@ function main() {
 				const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, values[i]);
 			  	const program = createProgram(gl, vertexShader, fragmentShader);
 			  	programs.push(program);
-			  	console.log(i+' '+String(fragmentShader[i]));
+			  	//console.log(i+' '+String(fragmentShader[i]));
 				//console.log(program);
 			}
 
@@ -115,21 +128,13 @@ function main() {
 			gl.useProgram(programs[currentShaderIndex]);
 			let timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation, positionBuffer;
 			
-			function setValues(timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation, positionBuffer)
-			{
-				timeUniformLocation = gl.getUniformLocation(currentProgram, "u_time"); 
-						
-				viewUniformLocation = gl.getUniformLocation(currentProgram, "u_view"); 
-
-				resolutionUniformLocation = gl.getUniformLocation(currentProgram, "u_resolution");
-
-				positionAttributeLocation = gl.getAttribLocation(currentProgram, "a_position");
-						
-				positionBuffer = gl.createBuffer();
-
-			}
 			
-			setValues(timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation, positionBuffer);
+			var temp = setValues(gl, timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation);
+			timeUniformLocation=temp[0], viewUniformLocation=temp[1], resolutionUniformLocation=temp[2], positionAttributeLocation=temp[3];
+			positionBuffer = gl.createBuffer();
+			
+			
+			
 			gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 			
 			var positions = [
