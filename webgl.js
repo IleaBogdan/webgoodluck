@@ -37,8 +37,8 @@ function createProgram(gl, vertexShader, fragmentShader) {
 }
 
 function newProg(index) {
-  if (pressedKeys[49]) return 1;
-  if (pressedKeys[50]) return 2;
+  if (pressedKeys[49]) return 0;
+  if (pressedKeys[50]) return 1;
   return index + 1;
 }
 
@@ -70,19 +70,14 @@ function setValues(gl, timeUniformLocation, viewUniformLocation, resolutionUnifo
 }
 
 function switchShader(gl, index, timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation, count, primitiveType, timeStamp, offset) {
-  if (index < fragmentShaders.length) {
-    let oldindex = currentShaderIndex;
+  if (index < fragmentShaders.length && index!=currentShaderIndex) {
     currentShaderIndex = index;
 
-    if (programs[currentShaderIndex]) {
-      // Switch to precompiled program
-      currentProgram = programs[currentShaderIndex];
-      let temp = setValues(gl, timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation);
-      timeUniformLocation = temp[0], viewUniformLocation = temp[1], resolutionUniformLocation = temp[2], positionAttributeLocation = temp[3];
-      settingShitUp(gl, timeUniformLocation, resolutionUniformLocation, viewUniformLocation, count, primitiveType, timeStamp, offset);
-    } else {
-      console.log("ERROR: Shader index out of bounds");
-    }
+	// Switch to precompiled program
+	currentProgram = programs[currentShaderIndex];
+	let temp = setValues(gl, timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation);
+	timeUniformLocation = temp[0], viewUniformLocation = temp[1], resolutionUniformLocation = temp[2], positionAttributeLocation = temp[3];
+	settingShitUp(gl, timeUniformLocation, resolutionUniformLocation, viewUniformLocation, count, primitiveType, timeStamp, offset);
   } else {
     console.log("ERROR: Shader index too high.");
   }
@@ -150,58 +145,61 @@ function main() {
 			settingShitUp(gl, timeUniformLocation, resolutionUniformLocation, viewUniformLocation, count, primitiveType, timeStamp, offset);
 
 
-			let newIndex = newProg(currentShaderIndex) - 1;
+			let newIndex = newProg(currentShaderIndex);
 			if (currentShaderIndex !== newIndex) switchShader(gl, newIndex, timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation, count, primitiveType, timeStamp, offset);
 
 			// Recursive call to render loop
 			window.requestAnimationFrame(renderLoop);
-				z/=(pressedKeys[32] ? 1.0+speed : 1.0);
-				z*=(pressedKeys[16] ? 1.0+speed : 1.0);
-				x+=
-					z*
+
+
+
+			z/=(pressedKeys[32] ? 1.0+speed : 1.0);
+			z*=(pressedKeys[16] ? 1.0+speed : 1.0);
+			x+=
+				z*
+				(
+					Math.cos(r)*
 					(
-						Math.cos(r)*
-						(
-							(pressedKeys[65] ? -speed : 0.0)+
-							(pressedKeys[68] ? speed : 0.0)
-						)
-						-
-						Math.sin(r)*
-						(
-							(pressedKeys[87] ? speed : 0.0)+
-							(pressedKeys[83] ? -speed : 0.0)
-						)
-					);
-				y+=
-					z*(
-						Math.sin(r)*
-						(
-							(pressedKeys[65] ? -speed : 0.0)+
-							(pressedKeys[68] ? speed : 0.0)
-						)
-						+
-						Math.cos(r)*
-						(
-							(pressedKeys[87] ? speed : 0.0)+
-							(pressedKeys[83] ? -speed : 0.0)
-						)
-					);
-				//x+=z*((pressedKeys[65] ? -speed : 0.0)+(pressedKeys[68] ? speed : 0.0));
-				r+=(pressedKeys[81] ? speed : 0.0);
-				r+=(pressedKeys[69] ? -speed : 0.0);
-				speed*=(pressedKeys[88] ? 1.1 : 1.0);
-				speed/=(pressedKeys[90] ? 1.1 : 1.0);
-				if (pressedKeys[82]){
-					z=default_z;
-					x=default_x;
-					y=default_y;
-					r=default_r;
-					speed=default_speed;
-				}
-				var tmp=newProg(currentShaderIndex)-1; 
-				// trebe scazuta valoarea pt ca pula asa am ales io si daca imi schimbi o sa iti fut codu undeva 
-				if (currentShaderIndex!=tmp)switchShader(gl, tmp);
-				//console.log(tmp);
+						(pressedKeys[65] ? -speed : 0.0)+
+						(pressedKeys[68] ? speed : 0.0)
+					)
+					-
+					Math.sin(r)*
+					(
+						(pressedKeys[87] ? speed : 0.0)+
+						(pressedKeys[83] ? -speed : 0.0)
+					)
+				);
+			y+=
+				z*(
+					Math.sin(r)*
+					(
+						(pressedKeys[65] ? -speed : 0.0)+
+						(pressedKeys[68] ? speed : 0.0)
+					)
+					+
+					Math.cos(r)*
+					(
+						(pressedKeys[87] ? speed : 0.0)+
+						(pressedKeys[83] ? -speed : 0.0)
+					)
+				);
+			//x+=z*((pressedKeys[65] ? -speed : 0.0)+(pressedKeys[68] ? speed : 0.0));
+			r+=(pressedKeys[81] ? speed : 0.0);
+			r+=(pressedKeys[69] ? -speed : 0.0);
+			speed*=(pressedKeys[88] ? 1.1 : 1.0);
+			speed/=(pressedKeys[90] ? 1.1 : 1.0);
+			if (pressedKeys[82]){
+				z=default_z;
+				x=default_x;
+				y=default_y;
+				r=default_r;
+				speed=default_speed;
+			}
+			var tmp=newProg(currentShaderIndex)-1; 
+			// trebe scazuta valoarea pt ca pula asa am ales io si daca imi schimbi o sa iti fut codu undeva 
+			if (currentShaderIndex!=tmp)switchShader(gl, tmp);
+			//console.log(tmp);
 			}
 			// begin the render loop
 			window.requestAnimationFrame(renderLoop);

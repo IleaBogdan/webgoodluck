@@ -67,9 +67,9 @@ void main()
 		h += (float(l)/float(maxiters))/float(MSAA);
 	}
 
-//	vec3 col = hsv2rgb(vec3(1.0*h+0.1*u_time, 1.0, sqrt(h)));
+	vec3 col = hsv2rgb(vec3(1.0*h+0.1*u_time, 1.0, sqrt(h)));
 
-	vec3 col = vec3((h));
+//	vec3 col = vec3((h));
 
 	FragColor = vec4(col, 1.0);
 }

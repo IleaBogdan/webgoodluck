@@ -59,7 +59,7 @@ void main()
 		{
 			aux = z;
             aux.x=-aux.x;
-			z=cm(z, aux);
+			z=cm(z, z);
 //			z.x = (z.x*z.x -z.y*z.y);
 //			z.y = (2.0*aux.x*aux.y);
 			z += c;
