@@ -1,11 +1,11 @@
 "use strict";
-let x=0.0, y=0.0, z=1.0, r=0.0, speed=0.01;
-let default_x=0.0, default_y=0.0, default_z=1.0, default_r=0.0, default_speed=0.01;
 
+let x = 0.0, y = 0.0, z = 1.0, r = 0.0, speed = 0.01;
+let default_x = 0.0, default_y = 0.0, default_z = 1.0, default_r = 0.0, default_speed = 0.01;
 
-var pressedKeys = {};
-window.onkeyup = function(e) { pressedKeys[e.keyCode] = false; }
-window.onkeydown = function(e) { pressedKeys[e.keyCode] = true; }
+let pressedKeys = {};
+window.onkeyup = function(e) { pressedKeys[e.keyCode] = false; };
+window.onkeydown = function(e) { pressedKeys[e.keyCode] = true; };
 
 function createShader(gl, type, source) {
   var shader = gl.createShader(type);
@@ -16,7 +16,7 @@ function createShader(gl, type, source) {
     return shader;
   }
 
-  console.log(gl.getShaderInfoLog(shader));  // eslint-disable-line
+  console.log(gl.getShaderInfoLog(shader));
   gl.deleteShader(shader);
   return undefined;
 }
@@ -31,168 +31,129 @@ function createProgram(gl, vertexShader, fragmentShader) {
     return program;
   }
 
-  console.log(gl.getProgramInfoLog(program));  // eslint-disable-line
+  console.log(gl.getProgramInfoLog(program));
   gl.deleteProgram(program);
   return undefined;
 }
 
-function newProg(index)
-{
-	if (pressedKeys[49])return 1;
-	if (pressedKeys[50])return 2;
-
-	return index+1;
+function newProg(index) {
+  if (pressedKeys[49]) return 1;
+  if (pressedKeys[50]) return 2;
+  return index + 1;
 }
 
 // Array to keep shader files
 let fragmentShaders = [
-	"./mandelbrot.glsl",
-	"./test1.glsl" // this one is just a test one you can remove it or nah idk it is up to you
+  "./mandelbrot.glsl",
+  "./test1.glsl"
 ];
 let programs = [];
 let currentShaderIndex = 0;
 let currentProgram;
 
-function switchShader(gl, index) {
-	console.log(index);
-	if (index<fragmentShaders.length){
-		currentShaderIndex = index;
-		try{
-			gl.useProgram(programs[currentShaderIndex]);
-			currentProgram=programs[currentShaderIndex];
-		}
-		catch (e){
-			console.log("Yeah this is an error: " + String(e));
-			return;
-		}
-	} else {
-		console.log("ERROR: incorect fractal");
-		return;
-	}
+function settingShitUp(gl, timeUniformLocation, resolutionUniformLocation, viewUniformLocation, count, primitiveType, timeStamp, offset) {
+  gl.useProgram(currentProgram);
+  webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+  gl.uniform1f(timeUniformLocation, timeStamp / 1000.0);
+  gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+  gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
+  gl.uniform4f(viewUniformLocation, x, y, z, r);
+  gl.drawArrays(primitiveType, offset, count);
 }
 
-function setValues(gl, timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation)
-{
-	timeUniformLocation = gl.getUniformLocation(currentProgram, "u_time"); 
-			
-	viewUniformLocation = gl.getUniformLocation(currentProgram, "u_view"); 
-
-	resolutionUniformLocation = gl.getUniformLocation(currentProgram, "u_resolution");
-
-	positionAttributeLocation = gl.getAttribLocation(currentProgram, "a_position");
-	
-	var ret;
-	return [timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation];//ret;
+function setValues(gl, timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation) {
+  timeUniformLocation = gl.getUniformLocation(currentProgram, "u_time");
+  viewUniformLocation = gl.getUniformLocation(currentProgram, "u_view");
+  resolutionUniformLocation = gl.getUniformLocation(currentProgram, "u_resolution");
+  positionAttributeLocation = gl.getAttribLocation(currentProgram, "a_position");
+  return [timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation];
 }
+
+function switchShader(gl, index, timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation, count, primitiveType, timeStamp, offset) {
+  if (index < fragmentShaders.length) {
+    let oldindex = currentShaderIndex;
+    currentShaderIndex = index;
+
+    if (programs[currentShaderIndex]) {
+      // Switch to precompiled program
+      currentProgram = programs[currentShaderIndex];
+      let temp = setValues(gl, timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation);
+      timeUniformLocation = temp[0], viewUniformLocation = temp[1], resolutionUniformLocation = temp[2], positionAttributeLocation = temp[3];
+      settingShitUp(gl, timeUniformLocation, resolutionUniformLocation, viewUniformLocation, count, primitiveType, timeStamp, offset);
+    } else {
+      console.log("ERROR: Shader index out of bounds");
+    }
+  } else {
+    console.log("ERROR: Shader index too high.");
+  }
+}
+
+function loadShaders(gl) {
+  // Load both vertex and all fragment shaders in parallel
+  return Promise.all([fetch("./vertex.glsl"), ...fragmentShaders.map(url => fetch(url))])
+    .then(responses => Promise.all(responses.map(res => res.text())));
+}
+
 function main() {
-// Get A WebGL context
-	var canvas = document.getElementById("c");
-	var gl = canvas.getContext("webgl2");
-	if (!gl) {
-		console.log("WebGL2 not suported!");
-		return;
-	}  
-// create GLSL shaders, upload the GLSL source, compile the shaders
-	Promise.all([fetch("./vertex.glsl"), fetch(fragmentShaders[0])]) // foreach does not work to do this automatic so fuck you,
-																	// you need to add them manually (i hate js)
-		.then((values) => {
-			let result = [];
-			for (const i in values){
-				result.push(values[i].text());
-			}
-			return Promise.all(result);
-		})
-		.then((values) => 
-		{
-			//	console.log(values);
-			/*let program = createProgram(gl,
-				createShader(gl, gl.VERTEX_SHADER, values[0]),
-				createShader(gl, gl.FRAGMENT_SHADER, values[1])
-			);
-			*/
-			// Create and store all programs
-			const vertexShader = createShader(gl, gl.VERTEX_SHADER, values[0]);
+  // Get A WebGL context
+  		var canvas = document.getElementById("c");
+  		var gl = canvas.getContext("webgl2");
+  		if (!gl) {
+    		console.log("WebGL2 not supported!");
+    		return;
+  		}
 
+  // Load and compile shaders
+  		loadShaders(gl).then(values => {
+    		const vertexShader = createShader(gl, gl.VERTEX_SHADER, values[0]);
 			for (let i = 1; i < values.length; i++) {
-				const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, values[i]);
-			  	const program = createProgram(gl, vertexShader, fragmentShader);
-			  	programs.push(program);
-			  	//console.log(i+' '+String(fragmentShader[i]));
-				//console.log(program);
+			const fragmentShader = createShader(gl, gl.FRAGMENT_SHADER, values[i]);
+			const program = createProgram(gl, vertexShader, fragmentShader);
+			programs.push(program);
 			}
 
-			/*for (var i=0; i<fragmentShaders.length; i++){
-				console.log(String(fragmentShaders[i]) + ' ' + i + ' ' + String(programs[i]));
-			}*/
-			currentProgram=programs[currentShaderIndex];
-			gl.useProgram(programs[currentShaderIndex]);
+    		currentProgram = programs[currentShaderIndex];
+    		gl.useProgram(currentProgram);
+
 			let timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation, positionBuffer;
-			
-			
-			var temp = setValues(gl, timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation);
-			timeUniformLocation=temp[0], viewUniformLocation=temp[1], resolutionUniformLocation=temp[2], positionAttributeLocation=temp[3];
+			let temp = setValues(gl, timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation);
+			timeUniformLocation = temp[0], viewUniformLocation = temp[1], resolutionUniformLocation = temp[2], positionAttributeLocation = temp[3];
+
 			positionBuffer = gl.createBuffer();
-			
-			
-			
 			gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-			
+
 			var positions = [
-			  -1.0, -1.0,
-			  -1.0,  1.0,
-			   1.0,  1.0,
-			  -1.0, -1.0,
-			   1.0, -1.0,
-			   1.0,  1.0,
+			-1.0, -1.0,
+			-1.0,  1.0,
+			1.0,  1.0,
+			-1.0, -1.0,
+			1.0, -1.0,
+			1.0,  1.0,
 			];
 			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
 			let vao = gl.createVertexArray();
 			gl.bindVertexArray(vao);
 			gl.enableVertexAttribArray(positionAttributeLocation);
-			var size = 2;          // 2 components per iteration
-			var type = gl.FLOAT;   // the data is 32bit floats
-			var normalize = false; // don't normalize the data
-			var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-			var offset = 0;        // start at the beginning of the buffer
-			gl.vertexAttribPointer(
-			    positionAttributeLocation, size, type, normalize, stride, offset);
-			
+			var size = 2, type = gl.FLOAT, normalize = false, stride = 0, offset = 0;
+			gl.vertexAttribPointer(positionAttributeLocation, size, type, normalize, stride, offset);
+
 			webglUtils.resizeCanvasToDisplaySize(gl.canvas);
-			
-		// Tell WebGL how to convert from clip space to pixels
 			gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-			
-		// Clear the canvas
 			gl.clearColor(0, 0, 0, 0);
 			gl.clear(gl.COLOR_BUFFER_BIT);
-			
-		// Tell it to use our program (pair of shaders)
-			gl.useProgram(currentProgram);
 
-			
-		// Bind the attribute/buffer set we want.
-			gl.bindVertexArray(vao);
-			
-		// draw
-			var primitiveType = gl.TRIANGLES;
-			var offset = 0;
-			var count = 6;
+			let primitiveType = gl.TRIANGLES;
+			let count = 6;
 
-			function renderLoop(timeStamp) { 
-		// set time uniform
-			gl.useProgram(currentProgram);
-			webglUtils.resizeCanvasToDisplaySize(gl.canvas);
-			gl.uniform1f(timeUniformLocation, timeStamp/1000.0);
-			//gl.uniform1f(keyUniformLocation, key);
-			gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-			gl.uniform2f(resolutionUniformLocation, gl.canvas.width, gl.canvas.height);
-			gl.uniform4f(viewUniformLocation, x, y, z, r);
-			gl.drawArrays(primitiveType, offset, count);
-			
-		// recursive invocation
-			
-      //recursive call to renderLoop
+			function renderLoop(timeStamp) {
+			settingShitUp(gl, timeUniformLocation, resolutionUniformLocation, viewUniformLocation, count, primitiveType, timeStamp, offset);
+
+
+			let newIndex = newProg(currentShaderIndex) - 1;
+			if (currentShaderIndex !== newIndex) switchShader(gl, newIndex, timeUniformLocation, viewUniformLocation, resolutionUniformLocation, positionAttributeLocation, count, primitiveType, timeStamp, offset);
+
+			// Recursive call to render loop
 			window.requestAnimationFrame(renderLoop);
 				z/=(pressedKeys[32] ? 1.0+speed : 1.0);
 				z*=(pressedKeys[16] ? 1.0+speed : 1.0);
@@ -242,7 +203,6 @@ function main() {
 				if (currentShaderIndex!=tmp)switchShader(gl, tmp);
 				//console.log(tmp);
 			}
-
 			// begin the render loop
 			window.requestAnimationFrame(renderLoop);
 		})
