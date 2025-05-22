@@ -27,10 +27,12 @@ float weierstrass(float x) {
     float norm = 0.0;
     
     // Accumulate the series and weight factor
-    for (int n = 0; n < N; n++) {
-        float weight = pow(a, float(n));
-        sum += weight * cos(pow(b, float(n)) * 3.14159 * x);
-        norm += weight;
+    for (int n = 0; n < N; ++n) {
+        for (int i=0; i<n; ++i){
+            float weight = pow(a, float(i));
+            sum += weight * cos(pow(b, float(i)) * 3.14159 * x);
+            norm += weight;
+        }
     }
     return sum / norm;
 }
@@ -52,7 +54,7 @@ void main() {
     
     rotatedUV = rotatedUV * u_pos.z + u_pos.xy;
     
-    float x = rotatedUV.x * 4.0;
+    float x = rotatedUV.x * 1.0;
     
     // Calculate the Weierstrass function value at x.
     float yValue = weierstrass(x);

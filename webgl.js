@@ -298,11 +298,12 @@ function main() {
 				A=Math.max(A, 0.005);
 				//A=(((A*1000)+1000)%1000)/1000.0;
 
-				B+=(pressedKeys[37] ? 1 : 0);
-				B-=(pressedKeys[39] ? 1 : 0);
-				// bmax = 107
-				// bmin = 0
-				B=(B+107)%107;
+				B+=(pressedKeys[37] ? 2 : 0);
+				B-=(pressedKeys[39] ? 2 : 0);
+				// bmax = 97 
+				// bmin = 1
+				B=Math.min(B, 97);
+				B=Math.max(B, 1);
 
 				// changing speen when 'z' or 'x' pressed
 				speed*=(pressedKeys[88] ? 1.1 : 1.0);
