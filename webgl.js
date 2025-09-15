@@ -1,9 +1,9 @@
 "use strict";
 
 // the values that you change based on what key you press
-let x=-.52, y=0.0, z=1.0, rx=0.0, ry=0.0, rz=0.0, speed=0.01, key=1.0;
+let x=0.0, y=0.0, z=1.0, rx=0.0, ry=0.0, rz=0.0, speed=0.01, key=1.0;
 let A=.5, B=3;
-let default_x=-.52, default_y=0.0, default_z=1.0, default_rx=0.0, default_ry=0.0, default_rz=0.0, default_speed=0.01;
+let default_x=0.0, default_y=0.0, default_z=1.0, default_rx=0.0, default_ry=0.0, default_rz=0.0, default_speed=0.01;
 
 let on0=true;
 let MSAA=4.0, maxiters=128.0;
